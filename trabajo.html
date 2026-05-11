@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>ANALISIS DE VENTAS</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+    body {
+        background: #0a0c10;
+        color: #e2e8f0;
+        font-family: 'Monospace', sans-serif;
+    }
+    h1 {
+        text-transform: uppercase;
+        border-bottom: 2px solid #4f8ef7;
+   
+    }
+    .seccion {
+        color: #94a3b8;
+        font-size: 11px;
+        text-transform: uppercase;
+		font-weight: bold;
+        border-left: 2px solid #4f8ef7;
+        padding-left: 10px;
+    }
+    .grid-dashboard {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px 20px;
+        width: 100%;
+        justify-items: center;
+        align-items: center;
+    }
+   
+    .col-header {
+        font-size: 1.4em;
+        color: #e2e8f0;
+        border-bottom: 2px solid #34d399;
+        width: 100%;
+        text-align: center;
+        padding-bottom: 10px;
+        text-transform: uppercase;
+        font-weight: bold;
+        margin-bottom: 20px;
+    }
+
+
+</style>
+</head>
+<body>
+
+<h1>Análisis de Ventas - Dashboard Principal</h1>
+
+<div class="grid-dashboard">
+    <div class="col-header">Aitor Marcalain Mauleon</div>
+    <div class="col-header">Iker Elias Aramburu</div>
+
+    <div class="seccion">Pedidos Mensuales (Canvas)</div>
+    <div class="seccion">Margen Bruto Mensual (Canvas)</div>
+    
+    <canvas id="Canvas1_Aitor" width="500" height="400"></canvas>
+    <canvas id="Canvas1_Iker" width="500" height="400"></canvas>
+
+    <div class="seccion">Ingresos Netos Mensuales (SVG)</div>
+    <div class="seccion">Tasa de Conversión Mensual (%) (SVG)</div>
+    
+    <svg id="SVG1_Aitor" width="500" height="400"></svg>
+    <svg id="SVG1_Iker" width="500" height="400"></svg>
+
+    <div class="seccion">Estado de Pedidos (Chart.js)</div>
+    <div class="seccion">Métodos de Pago (Chart.js)</div>
+    
+    <canvas id="ChartJS1_Aitor" width="500" height="400"></canvas>
+    <canvas id="ChartJS1_Iker" width="500" height="400"></canvas>
+
+    <div class="seccion">Ventas por Subcategoría (Treemap D3)</div>
+    <div class="seccion">Devoluciones por Motivo (Treemap D3)</div>
+    
+    <svg id="D31_Aitor" width="500" height="400"></svg>
+    <svg id="D31_Iker" width="500" height="400"></svg>
+	
+	<div class="seccion">Ingresos por Marca (Top 15)</div>
+	<div class="seccion">Ventas por Comunidad Autónoma</div>
+	
+    <svg id="svgMarcas" width="900" height="420"></svg>
+    <svg id="svgCCAA" width="900" height="420"></svg>
+	
+    <div class="seccion">Ingresos Netos por Trimestre</div>
+    <div class="seccion">Rating y % Recomendado por Categoría</div>
+	
+    <canvas id="chartTrimestre" width="900" height="380"></canvas>
+    <canvas id="chartRatingCat" width="900" height="380"></canvas>
+    
+
+<script>
+// ════════════════════════════════════════════════════════
+// DATA 
+// ════════════════════════════════════════════════════════
+const DATA = {"generated_at":"2026-05-04 18:06:06","kpis":{"total_pedidos":6503,"pedidos_entregados":5242,"ingreso_total_neto":2303270.43,"margen_bruto_total":759119.78,"margen_pct_global":32.96,"ticket_medio":354.24,"total_clientes":1809,"total_devoluciones":700,"tasa_devolucion_pct":10.76,"rating_medio":4.19},"ventas_categoria":[{"Categoria":"Electrónica","IngresoNeto":1471913.73,"MargenBruto":420936.98,"UnidadesVendidas":5504,"NumLineas":4358,"MargenPct":28.6},{"Categoria":"Videojuegos","IngresoNeto":295439.82,"MargenBruto":95493.68,"UnidadesVendidas":1771,"NumLineas":1272,"MargenPct":32.32},{"Categoria":"Hogar y cocina","IngresoNeto":250336.08,"MargenBruto":107217.05,"UnidadesVendidas":1426,"NumLineas":793,"MargenPct":42.83},{"Categoria":"Juguetes y juegos","IngresoNeto":128493.29,"MargenBruto":58102.93,"UnidadesVendidas":4787,"NumLineas":2651,"MargenPct":45.22},{"Categoria":"Belleza","IngresoNeto":74637.27,"MargenBruto":40551.02,"UnidadesVendidas":2883,"NumLineas":1350,"MargenPct":54.33},{"Categoria":"Deportes","IngresoNeto":73636.57,"MargenBruto":31435.6,"UnidadesVendidas":2051,"NumLineas":1136,"MargenPct":42.69},{"Categoria":"Alimentación y bebidas","IngresoNeto":31545.26,"MargenBruto":12253.54,"UnidadesVendidas":5669,"NumLineas":2024,"MargenPct":38.84}],"ventas_mes":[{"Mes":"2024-01","IngresoNeto":27488.28,"MargenBruto":9474.99,"NumPedidos":66},{"Mes":"2024-02","IngresoNeto":25835.61,"MargenBruto":8044.36,"NumPedidos":58},{"Mes":"2024-03","IngresoNeto":30862.42,"MargenBruto":9945.41,"NumPedidos":75},{"Mes":"2024-04","IngresoNeto":33861.5,"MargenBruto":11686.27,"NumPedidos":93},{"Mes":"2024-05","IngresoNeto":27470.7,"MargenBruto":8936.63,"NumPedidos":87},{"Mes":"2024-06","IngresoNeto":34814.92,"MargenBruto":11239.76,"NumPedidos":91},{"Mes":"2024-07","IngresoNeto":57045.8,"MargenBruto":18674.22,"NumPedidos":152},{"Mes":"2024-08","IngresoNeto":42085.66,"MargenBruto":14242.37,"NumPedidos":136},{"Mes":"2024-09","IngresoNeto":42861.48,"MargenBruto":14910.76,"NumPedidos":149},{"Mes":"2024-10","IngresoNeto":63554.7,"MargenBruto":20344.85,"NumPedidos":160},{"Mes":"2024-11","IngresoNeto":75917.5,"MargenBruto":24704.18,"NumPedidos":221},{"Mes":"2024-12","IngresoNeto":89264.77,"MargenBruto":29516.28,"NumPedidos":261},{"Mes":"2025-01","IngresoNeto":99420.43,"MargenBruto":33788.07,"NumPedidos":289},{"Mes":"2025-02","IngresoNeto":72027.53,"MargenBruto":24553.12,"NumPedidos":186},{"Mes":"2025-03","IngresoNeto":80259.35,"MargenBruto":27207.98,"NumPedidos":222},{"Mes":"2025-04","IngresoNeto":79603.62,"MargenBruto":26531.95,"NumPedidos":233},{"Mes":"2025-05","IngresoNeto":89042.62,"MargenBruto":29402.66,"NumPedidos":255},{"Mes":"2025-06","IngresoNeto":93203.89,"MargenBruto":31376.95,"NumPedidos":284},{"Mes":"2025-07","IngresoNeto":151040.1,"MargenBruto":48880.54,"NumPedidos":420},{"Mes":"2025-08","IngresoNeto":99630.7,"MargenBruto":32035.06,"NumPedidos":312},{"Mes":"2025-09","IngresoNeto":94545.85,"MargenBruto":31478.21,"NumPedidos":323},{"Mes":"2025-10","IngresoNeto":130236.87,"MargenBruto":42274.07,"NumPedidos":348},{"Mes":"2025-11","IngresoNeto":154511.79,"MargenBruto":51727.71,"NumPedidos":461},{"Mes":"2025-12","IngresoNeto":196979.69,"MargenBruto":64601.57,"NumPedidos":493},{"Mes":"2026-01","IngresoNeto":198713.06,"MargenBruto":64164.11,"NumPedidos":533},{"Mes":"2026-02","IngresoNeto":137099.43,"MargenBruto":44333.88,"NumPedidos":371},{"Mes":"2026-03","IngresoNeto":75892.16,"MargenBruto":25043.82,"NumPedidos":223}],"ventas_canal":[{"CanalCompra":"App","IngresoNeto":1341538.0,"NumPedidos":3748},{"CanalCompra":"Web","IngresoNeto":961732.43,"NumPedidos":2754}],"top_productos":[{"ProductID":"P00113","NombreProducto":"Watch Ultra 3 GPS + Cellular, Premium Running and ","Categoria":"Electrónica","Marca":"Apple","IngresoNeto":41332.67,"MargenBruto":13511.67,"UnidadesVendidas":50,"MargenPct":32.69},{"ProductID":"P00055","NombreProducto":"OmniBook 5 16″ OLED, Laptop (AMD Ryzen AI 7 350 Pr","Categoria":"Electrónica","Marca":"HP","IngresoNeto":35232.03,"MargenBruto":11646.93,"UnidadesVendidas":33,"MargenPct":33.06},{"ProductID":"P00050","NombreProducto":"15-fc0240ns - 15.6\" FHD Laptop (AMD Ryzen 7-7730U,","Categoria":"Electrónica","Marca":"HP","IngresoNeto":29290.64,"MargenBruto":10141.88,"UnidadesVendidas":43,"MargenPct":34.62},{"ProductID":"P00026","NombreProducto":"Apple iPad Pro 13″ (M5): Ultra Retina XDR Display,","Categoria":"Electrónica","Marca":"Apple","IngresoNeto":31286.93,"MargenBruto":9975.02,"UnidadesVendidas":27,"MargenPct":31.88},{"ProductID":"P00111","NombreProducto":"Watch Series 11 GPS+Cellular with Aluminium Case i","Categoria":"Electrónica","Marca":"Apple","IngresoNeto":30020.25,"MargenBruto":9921.99,"UnidadesVendidas":54,"MargenPct":33.05},{"ProductID":"P00067","NombreProducto":"TV 65 Inch Neo QLED QN80F 4K Mini LED Smart TV wit","Categoria":"Electrónica","Marca":"Samsung","IngresoNeto":24287.43,"MargenBruto":8777.07,"UnidadesVendidas":29,"MargenPct":36.14},{"ProductID":"P00245","NombreProducto":"Icons The Lord of the Rings: Barad-dûr Model for A","Categoria":"Juguetes y juegos","Marca":"LEGO","IngresoNeto":20095.07,"MargenBruto":8109.6,"UnidadesVendidas":47,"MargenPct":40.36},{"ProductID":"P00205","NombreProducto":"V11 Fluffy Cordless Vacuum Cleaner - 185 Airwatts,","Categoria":"Hogar y cocina","Marca":"Dyson","IngresoNeto":19366.75,"MargenBruto":8075.03,"UnidadesVendidas":44,"MargenPct":41.7},{"ProductID":"P00077","NombreProducto":"TV 48 Inch OLED S93F 4K Smart TV with Vision AI, M","Categoria":"Electrónica","Marca":"Samsung","IngresoNeto":28717.26,"MargenBruto":7742.81,"UnidadesVendidas":35,"MargenPct":26.96},{"ProductID":"P00217","NombreProducto":"V10 Absolute Bagless 0.76L Copper, Nickel – Vacuum","Categoria":"Hogar y cocina","Marca":"Dyson","IngresoNeto":16166.97,"MargenBruto":7555.95,"UnidadesVendidas":33,"MargenPct":46.74}],"estado_pedidos":[{"Estado":"Entregado","Count":5242},{"Estado":"Devuelto parcial","Count":574},{"Estado":"Cancelado","Count":257},{"Estado":"En tránsito","Count":223},{"Estado":"Incidencia logística","Count":206}],"motivos_devolucion":[{"Motivo":"Producto defectuoso","Count":147},{"Motivo":"Embalaje dañado","Count":87},{"Motivo":"Llegó tarde","Count":81},{"Motivo":"No era lo que esperaba","Count":73},{"Motivo":"Mejor precio en otra tienda","Count":68},{"Motivo":"No cumple expectativas","Count":61},{"Motivo":"Regalo duplicado","Count":41},{"Motivo":"No adecuado para la edad","Count":32},{"Motivo":"Piezas faltantes","Count":21},{"Motivo":"Sabor no esperado","Count":14},{"Motivo":"Talla o ajuste incorrecto","Count":14}],"metodos_pago":[{"MetodoPago":"Tarjeta","IngresoNeto":1188714.14,"NumPedidos":3356},{"MetodoPago":"Bizum","IngresoNeto":445062.29,"NumPedidos":1211},{"MetodoPago":"PayPal","IngresoNeto":386371.34,"NumPedidos":1083},{"MetodoPago":"Amazon Pay","IngresoNeto":283122.66,"NumPedidos":852}],"segmentos_cliente":[{"Segmento":"Bronce","Count":812},{"Segmento":"Plata","Count":545},{"Segmento":"Oro","Count":308},{"Segmento":"Platino","Count":144}],
+"ventas_subcategoria":[{"Categoria":"Electrónica","Subcategoria":"Portátiles","IngresoNeto":351331.23,"MargenBruto":99122.32,"UnidadesVendidas":717,"MargenPct":28.21},{"Categoria":"Electrónica","Subcategoria":"Wearables","IngresoNeto":301138.6,"MargenBruto":89480.63,"UnidadesVendidas":843,"MargenPct":29.71},{"Categoria":"Electrónica","Subcategoria":"Televisores","IngresoNeto":273808.93,"MargenBruto":74985.04,"UnidadesVendidas":773,"MargenPct":27.39},{"Categoria":"Electrónica","Subcategoria":"Tablets","IngresoNeto":243878.62,"MargenBruto":66007.7,"UnidadesVendidas":753,"MargenPct":27.07},{"Categoria":"Electrónica","Subcategoria":"Smartphones","IngresoNeto":217909.3,"MargenBruto":65780.24,"UnidadesVendidas":905,"MargenPct":30.19},{"Categoria":"Videojuegos","Subcategoria":"Consolas","IngresoNeto":198205.39,"MargenBruto":63808.95,"UnidadesVendidas":436,"MargenPct":32.19},{"Categoria":"Hogar y cocina","Subcategoria":"Limpieza","IngresoNeto":147161.2,"MargenBruto":63768.66,"UnidadesVendidas":709,"MargenPct":43.33},{"Categoria":"Hogar y cocina","Subcategoria":"Electrodomésticos pequeños","IngresoNeto":103174.88,"MargenBruto":43448.39,"UnidadesVendidas":717,"MargenPct":42.11},{"Categoria":"Electrónica","Subcategoria":"Audio","IngresoNeto":83847.05,"MargenBruto":25561.05,"UnidadesVendidas":1513,"MargenPct":30.49},{"Categoria":"Juguetes y juegos","Subcategoria":"Construcción","IngresoNeto":67492.98,"MargenBruto":30267.57,"UnidadesVendidas":872,"MargenPct":44.85},{"Categoria":"Belleza","Subcategoria":"Perfumes","IngresoNeto":58405.52,"MargenBruto":31731.88,"UnidadesVendidas":1221,"MargenPct":54.33},{"Categoria":"Videojuegos","Subcategoria":"Accesorios","IngresoNeto":49332.05,"MargenBruto":16904.87,"UnidadesVendidas":579,"MargenPct":34.27},{"Categoria":"Deportes","Subcategoria":"Running","IngresoNeto":48661.58,"MargenBruto":21000.89,"UnidadesVendidas":931,"MargenPct":43.16},{"Categoria":"Videojuegos","Subcategoria":"Juegos","IngresoNeto":47902.38,"MargenBruto":14779.86,"UnidadesVendidas":756,"MargenPct":30.85},{"Categoria":"Deportes","Subcategoria":"Fitness","IngresoNeto":24974.99,"MargenBruto":10434.71,"UnidadesVendidas":1120,"MargenPct":41.78},{"Categoria":"Juguetes y juegos","Subcategoria":"Juegos de mesa","IngresoNeto":22925.82,"MargenBruto":10231.95,"UnidadesVendidas":1080,"MargenPct":44.63},{"Categoria":"Alimentación y bebidas","Subcategoria":"Bebidas","IngresoNeto":21692.62,"MargenBruto":8112.17,"UnidadesVendidas":2124,"MargenPct":37.4},{"Categoria":"Juguetes y juegos","Subcategoria":"Puzzles","IngresoNeto":21599.94,"MargenBruto":9847.33,"UnidadesVendidas":1265,"MargenPct":45.59},{"Categoria":"Juguetes y juegos","Subcategoria":"Muñecas y figuras","IngresoNeto":16474.55,"MargenBruto":7756.08,"UnidadesVendidas":1570,"MargenPct":47.08},{"Categoria":"Belleza","Subcategoria":"Maquillaje","IngresoNeto":16231.75,"MargenBruto":8819.14,"UnidadesVendidas":1662,"MargenPct":54.33},{"Categoria":"Alimentación y bebidas","Subcategoria":"Snacks","IngresoNeto":9852.64,"MargenBruto":4141.37,"UnidadesVendidas":3545,"MargenPct":42.03}],
+"ventas_marca":[{"Marca":"Apple","IngresoNeto":532934.05,"MargenBruto":151603.59,"UnidadesVendidas":1502,"MargenPct":28.45},{"Marca":"Samsung","IngresoNeto":489425.09,"MargenBruto":140193.75,"UnidadesVendidas":1669,"MargenPct":28.64},{"Marca":"HP","IngresoNeto":326459.95,"MargenBruto":91631.04,"UnidadesVendidas":673,"MargenPct":28.07},{"Marca":"Sony","IngresoNeto":322429.5,"MargenBruto":102843.08,"UnidadesVendidas":2434,"MargenPct":31.9},{"Marca":"Dyson","IngresoNeto":142535.83,"MargenBruto":61921.65,"UnidadesVendidas":670,"MargenPct":43.44},{"Marca":"Philips","IngresoNeto":96364.12,"MargenBruto":40146.48,"UnidadesVendidas":655,"MargenPct":41.66},{"Marca":"LEGO","IngresoNeto":67492.98,"MargenBruto":30267.57,"UnidadesVendidas":872,"MargenPct":44.85},{"Marca":"Calvin Klein","IngresoNeto":58405.52,"MargenBruto":31731.88,"UnidadesVendidas":1221,"MargenPct":54.33},{"Marca":"Nintendo","IngresoNeto":47902.38,"MargenBruto":14779.86,"UnidadesVendidas":756,"MargenPct":30.85},{"Marca":"Nike","IngresoNeto":44830.99,"MargenBruto":19566.64,"UnidadesVendidas":823,"MargenPct":43.65},{"Marca":"Adidas","IngresoNeto":28805.58,"MargenBruto":11868.96,"UnidadesVendidas":1228,"MargenPct":41.2},{"Marca":"ASUS","IngresoNeto":24871.28,"MargenBruto":7491.28,"UnidadesVendidas":44,"MargenPct":30.12},{"Marca":"Hasbro","IngresoNeto":22925.82,"MargenBruto":10231.95,"UnidadesVendidas":1080,"MargenPct":44.63},{"Marca":"Coca-Cola","IngresoNeto":21692.62,"MargenBruto":8112.17,"UnidadesVendidas":2124,"MargenPct":37.4},{"Marca":"Ravensburger","IngresoNeto":21599.94,"MargenBruto":9847.33,"UnidadesVendidas":1265,"MargenPct":45.59}],
+"rating_distribucion":[{"Rating":1,"Count":79,"Pct":2.89},{"Rating":2,"Count":84,"Pct":3.08},{"Rating":3,"Count":245,"Pct":8.97},{"Rating":4,"Count":1159,"Pct":42.44},{"Rating":5,"Count":1164,"Pct":42.62}],
+"rating_por_categoria":[{"Categoria":"Alimentación y bebidas","RatingMedio":4.1,"NumReviews":347,"Recomendados":305,"PctRecomendado":87.9},{"Categoria":"Belleza","RatingMedio":4.3,"NumReviews":273,"Recomendados":254,"PctRecomendado":93.0},{"Categoria":"Deportes","RatingMedio":4.18,"NumReviews":211,"Recomendados":191,"PctRecomendado":90.5},{"Categoria":"Electrónica","RatingMedio":4.03,"NumReviews":1034,"Recomendados":871,"PctRecomendado":84.2},{"Categoria":"Hogar y cocina","RatingMedio":4.29,"NumReviews":156,"Recomendados":141,"PctRecomendado":90.4},{"Categoria":"Juguetes y juegos","RatingMedio":4.45,"NumReviews":513,"Recomendados":476,"PctRecomendado":92.8},{"Categoria":"Videojuegos","RatingMedio":4.21,"NumReviews":239,"Recomendados":215,"PctRecomendado":90.0}],
+"funnel_mensual":[{"Mes":"2024-01","Sesiones":21458,"UsuariosUnicos":17203,"ProductosVistos":133582,"AnadidosCarrito":2789,"CheckoutsIniciados":1833,"PedidosCompletados":66,"TasaConvPct":0.308,"TasaCarritoPct":12.997},{"Mes":"2024-02","Sesiones":19859,"UsuariosUnicos":15733,"ProductosVistos":128893,"AnadidosCarrito":2309,"CheckoutsIniciados":1486,"PedidosCompletados":58,"TasaConvPct":0.292,"TasaCarritoPct":11.627},{"Mes":"2024-03","Sesiones":21554,"UsuariosUnicos":17275,"ProductosVistos":143261,"AnadidosCarrito":2599,"CheckoutsIniciados":1702,"PedidosCompletados":75,"TasaConvPct":0.348,"TasaCarritoPct":12.058},{"Mes":"2024-04","Sesiones":21272,"UsuariosUnicos":17066,"ProductosVistos":132291,"AnadidosCarrito":2491,"CheckoutsIniciados":1666,"PedidosCompletados":93,"TasaConvPct":0.437,"TasaCarritoPct":11.71},{"Mes":"2024-05","Sesiones":22142,"UsuariosUnicos":17675,"ProductosVistos":138712,"AnadidosCarrito":2577,"CheckoutsIniciados":1649,"PedidosCompletados":87,"TasaConvPct":0.393,"TasaCarritoPct":11.639},{"Mes":"2024-06","Sesiones":21897,"UsuariosUnicos":16729,"ProductosVistos":136937,"AnadidosCarrito":2525,"CheckoutsIniciados":1639,"PedidosCompletados":91,"TasaConvPct":0.416,"TasaCarritoPct":11.531},{"Mes":"2024-07","Sesiones":20720,"UsuariosUnicos":16467,"ProductosVistos":128537,"AnadidosCarrito":2721,"CheckoutsIniciados":1756,"PedidosCompletados":152,"TasaConvPct":0.734,"TasaCarritoPct":13.132},{"Mes":"2024-08","Sesiones":20864,"UsuariosUnicos":16724,"ProductosVistos":133355,"AnadidosCarrito":2436,"CheckoutsIniciados":1564,"PedidosCompletados":136,"TasaConvPct":0.652,"TasaCarritoPct":11.676},{"Mes":"2024-09","Sesiones":21091,"UsuariosUnicos":16704,"ProductosVistos":139251,"AnadidosCarrito":2539,"CheckoutsIniciados":1628,"PedidosCompletados":149,"TasaConvPct":0.706,"TasaCarritoPct":12.038},{"Mes":"2024-10","Sesiones":21474,"UsuariosUnicos":17014,"ProductosVistos":133363,"AnadidosCarrito":2513,"CheckoutsIniciados":1567,"PedidosCompletados":160,"TasaConvPct":0.745,"TasaCarritoPct":11.703},{"Mes":"2024-11","Sesiones":19974,"UsuariosUnicos":15776,"ProductosVistos":122939,"AnadidosCarrito":2598,"CheckoutsIniciados":1658,"PedidosCompletados":221,"TasaConvPct":1.106,"TasaCarritoPct":13.007},{"Mes":"2024-12","Sesiones":21527,"UsuariosUnicos":17417,"ProductosVistos":142034,"AnadidosCarrito":2897,"CheckoutsIniciados":1899,"PedidosCompletados":261,"TasaConvPct":1.212,"TasaCarritoPct":13.458},{"Mes":"2025-01","Sesiones":23684,"UsuariosUnicos":18932,"ProductosVistos":156229,"AnadidosCarrito":3116,"CheckoutsIniciados":1988,"PedidosCompletados":289,"TasaConvPct":1.22,"TasaCarritoPct":13.157},{"Mes":"2025-02","Sesiones":18863,"UsuariosUnicos":14955,"ProductosVistos":119264,"AnadidosCarrito":2281,"CheckoutsIniciados":1483,"PedidosCompletados":186,"TasaConvPct":0.986,"TasaCarritoPct":12.092},{"Mes":"2025-03","Sesiones":21660,"UsuariosUnicos":17462,"ProductosVistos":132689,"AnadidosCarrito":2553,"CheckoutsIniciados":1612,"PedidosCompletados":222,"TasaConvPct":1.025,"TasaCarritoPct":11.787},{"Mes":"2025-04","Sesiones":20635,"UsuariosUnicos":16403,"ProductosVistos":127464,"AnadidosCarrito":2441,"CheckoutsIniciados":1571,"PedidosCompletados":232,"TasaConvPct":1.124,"TasaCarritoPct":11.829},{"Mes":"2025-05","Sesiones":22364,"UsuariosUnicos":17741,"ProductosVistos":143724,"AnadidosCarrito":2618,"CheckoutsIniciados":1632,"PedidosCompletados":255,"TasaConvPct":1.14,"TasaCarritoPct":11.706},{"Mes":"2025-06","Sesiones":21759,"UsuariosUnicos":17160,"ProductosVistos":133260,"AnadidosCarrito":2587,"CheckoutsIniciados":1641,"PedidosCompletados":284,"TasaConvPct":1.305,"TasaCarritoPct":11.889},{"Mes":"2025-07","Sesiones":23796,"UsuariosUnicos":18874,"ProductosVistos":152540,"AnadidosCarrito":3069,"CheckoutsIniciados":1929,"PedidosCompletados":420,"TasaConvPct":1.765,"TasaCarritoPct":12.897},{"Mes":"2025-08","Sesiones":22977,"UsuariosUnicos":18081,"ProductosVistos":150793,"AnadidosCarrito":2656,"CheckoutsIniciados":1722,"PedidosCompletados":312,"TasaConvPct":1.358,"TasaCarritoPct":11.559},{"Mes":"2025-09","Sesiones":20093,"UsuariosUnicos":15988,"ProductosVistos":127344,"AnadidosCarrito":2377,"CheckoutsIniciados":1491,"PedidosCompletados":322,"TasaConvPct":1.603,"TasaCarritoPct":11.83},{"Mes":"2025-10","Sesiones":22693,"UsuariosUnicos":17895,"ProductosVistos":145775,"AnadidosCarrito":2655,"CheckoutsIniciados":1701,"PedidosCompletados":348,"TasaConvPct":1.534,"TasaCarritoPct":11.7},{"Mes":"2025-11","Sesiones":23337,"UsuariosUnicos":18919,"ProductosVistos":152190,"AnadidosCarrito":3137,"CheckoutsIniciados":1994,"PedidosCompletados":461,"TasaConvPct":1.975,"TasaCarritoPct":13.442},{"Mes":"2025-12","Sesiones":22943,"UsuariosUnicos":18353,"ProductosVistos":143632,"AnadidosCarrito":2955,"CheckoutsIniciados":1905,"PedidosCompletados":493,"TasaConvPct":2.149,"TasaCarritoPct":12.88},{"Mes":"2026-01","Sesiones":26711,"UsuariosUnicos":21280,"ProductosVistos":169674,"AnadidosCarrito":3493,"CheckoutsIniciados":2276,"PedidosCompletados":533,"TasaConvPct":1.995,"TasaCarritoPct":13.077},{"Mes":"2026-02","Sesiones":21449,"UsuariosUnicos":16823,"ProductosVistos":137818,"AnadidosCarrito":2545,"CheckoutsIniciados":1634,"PedidosCompletados":371,"TasaConvPct":1.73,"TasaCarritoPct":11.865},{"Mes":"2026-03","Sesiones":14660,"UsuariosUnicos":11753,"ProductosVistos":92293,"AnadidosCarrito":1705,"CheckoutsIniciados":1078,"PedidosCompletados":223,"TasaConvPct":1.521,"TasaCarritoPct":11.63}],
+"clientes_por_ccaa":[{"CCAA":"Andalucía","NumClientes":318},{"CCAA":"Cataluña","NumClientes":282},{"CCAA":"Comunidad de Madrid","NumClientes":254},{"CCAA":"Comunidad Valenciana","NumClientes":203},{"CCAA":"País Vasco","NumClientes":124},{"CCAA":"Galicia","NumClientes":96},{"CCAA":"Castilla y León","NumClientes":83},{"CCAA":"Región de Murcia","NumClientes":81},{"CCAA":"Canarias","NumClientes":77},{"CCAA":"Asturias","NumClientes":60},{"CCAA":"Aragón","NumClientes":58},{"CCAA":"Islas Baleares","NumClientes":48},{"CCAA":"Castilla-La Mancha","NumClientes":32},{"CCAA":"Extremadura","NumClientes":29},{"CCAA":"Cantabria","NumClientes":23}],
+"ventas_por_ccaa":[{"CCAAEntrega":"Andalucía","IngresoNeto":434445.54,"NumPedidos":1199},{"CCAAEntrega":"Cataluña","IngresoNeto":389903.5,"NumPedidos":1059},{"CCAAEntrega":"Comunidad de Madrid","IngresoNeto":294663.0,"NumPedidos":846},{"CCAAEntrega":"Comunidad Valenciana","IngresoNeto":276481.32,"NumPedidos":799},{"CCAAEntrega":"País Vasco","IngresoNeto":154566.0,"NumPedidos":422},{"CCAAEntrega":"Región de Murcia","IngresoNeto":107263.36,"NumPedidos":297},{"CCAAEntrega":"Galicia","IngresoNeto":104219.84,"NumPedidos":324},{"CCAAEntrega":"Castilla y León","IngresoNeto":101438.69,"NumPedidos":291},{"CCAAEntrega":"Canarias","IngresoNeto":96056.46,"NumPedidos":273},{"CCAAEntrega":"Principado de Asturias","IngresoNeto":71979.41,"NumPedidos":204},{"CCAAEntrega":"Illes Balears","IngresoNeto":69743.9,"NumPedidos":175},{"CCAAEntrega":"Aragón","IngresoNeto":62700.64,"NumPedidos":193}],
+"distribucion_edad":[{"GrupoEdad":"18-24","Count":191},{"GrupoEdad":"25-34","Count":435},{"GrupoEdad":"35-44","Count":581},{"GrupoEdad":"45-54","Count":430},{"GrupoEdad":"55-64","Count":150},{"GrupoEdad":"65+","Count":22}],
+"devolucion_por_categoria":[{"Categoria":"Alimentación y bebidas","NumDevoluciones":30,"ImporteReembolsado":228.87,"NumLineas":2024,"TasaDevPct":1.48},{"Categoria":"Belleza","NumDevoluciones":34,"ImporteReembolsado":1187.37,"NumLineas":1350,"TasaDevPct":2.52},{"Categoria":"Deportes","NumDevoluciones":52,"ImporteReembolsado":2134.23,"NumLineas":1136,"TasaDevPct":4.58},{"Categoria":"Electrónica","NumDevoluciones":391,"ImporteReembolsado":92303.01,"NumLineas":4358,"TasaDevPct":8.97},{"Categoria":"Hogar y cocina","NumDevoluciones":58,"ImporteReembolsado":10795.86,"NumLineas":793,"TasaDevPct":7.31},{"Categoria":"Juguetes y juegos","NumDevoluciones":114,"ImporteReembolsado":3355.78,"NumLineas":2651,"TasaDevPct":4.3},{"Categoria":"Videojuegos","NumDevoluciones":36,"ImporteReembolsado":6227.09,"NumLineas":1272,"TasaDevPct":2.83}],
+"pedidos_dia_semana":[{"DiaSemana":"Lunes","IngresoNeto":379541.45,"NumPedidos":1027},{"DiaSemana":"Martes","IngresoNeto":348685.58,"NumPedidos":959},{"DiaSemana":"Miércoles","IngresoNeto":349202.91,"NumPedidos":948},{"DiaSemana":"Jueves","IngresoNeto":317248.29,"NumPedidos":914},{"DiaSemana":"Viernes","IngresoNeto":295026.47,"NumPedidos":869},{"DiaSemana":"Sábado","IngresoNeto":295478.14,"NumPedidos":840},{"DiaSemana":"Domingo","IngresoNeto":318087.59,"NumPedidos":945}],
+"ventas_trimestre":[{"Trimestre":"2024Q1","IngresoNeto":84186.31,"MargenBruto":27464.76,"NumPedidos":199},{"Trimestre":"2024Q2","IngresoNeto":96147.12,"MargenBruto":31862.66,"NumPedidos":271},{"Trimestre":"2024Q3","IngresoNeto":141992.94,"MargenBruto":47827.35,"NumPedidos":437},{"Trimestre":"2024Q4","IngresoNeto":228736.97,"MargenBruto":74565.31,"NumPedidos":642},{"Trimestre":"2025Q1","IngresoNeto":251707.31,"MargenBruto":85549.17,"NumPedidos":697},{"Trimestre":"2025Q2","IngresoNeto":261850.13,"MargenBruto":87311.56,"NumPedidos":772},{"Trimestre":"2025Q3","IngresoNeto":345216.65,"MargenBruto":112393.81,"NumPedidos":1055},{"Trimestre":"2025Q4","IngresoNeto":481728.35,"MargenBruto":158603.35,"NumPedidos":1302},{"Trimestre":"2026Q1","IngresoNeto":411704.65,"MargenBruto":133541.81,"NumPedidos":1127}]
+};
+
+// ════════════════════════════════════════════════════════
+// 1. CANVAS – Margen Bruto Mensual (Iker)
+// ════════════════════════════════════════════════════════
+const datosMargen = DATA.ventas_mes.map(d => ({  mes: d.Mes,  margen: d.MargenBruto}));
+{
+  // Buscamos el canvas en el HTML
+  const canvas = document.getElementById("Canvas1_Iker");
+
+  // Obtenemos el contexto 2D para poder dibujar
+  const ctx = canvas.getContext("2d");
+
+  // Márgenes de la gráfica
+  const mIzq = 80, mDer = 20, mArr = 50, mAba = 50;
+
+  // Ancho real disponible para dibujar la gráfica
+  const anchoC = canvas.width - mIzq - mDer;
+
+  // Alto real disponible para dibujar la gráfica
+  const altoC = canvas.height - mArr - mAba;
+
+  // Valor máximo del margen, usado para escalar las barras
+  const maxM = Math.max(...datosMargen.map(d => d.margen));
+
+  // Espacio horizontal disponible para cada barra
+  const anchoB = anchoC / datosMargen.length;
+
+  // Pintamos el fondo del canvas
+  ctx.fillStyle = "#0a0c10";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Estilo de las líneas horizontales de la grafica
+  ctx.strokeStyle = "#232840";
+
+  // Estilo del texto del eje vertical
+  ctx.fillStyle = "#64748b";
+  ctx.font = "12px monospace";
+  ctx.textAlign = "right";
+
+  // Dibujamos las líneas horizontales y sus valores. 
+  for (let i = 0; i <= 5; i++) {
+    const valor = (maxM / 5) * i;						//Calcula el valor que corresponde a cada línea horizontal.
+    const y = mArr + altoC - (altoC * i / 5);			//Calcula la posición vertical y de cada línea horizontal.
+
+    ctx.beginPath();									//Empieza un nuevo camino de dibujo.
+    ctx.moveTo(mIzq, y);								//Coloca el punto inicial de la línea.
+    ctx.lineTo(mIzq + anchoC, y);						//Define el punto final de la línea.
+    ctx.stroke();										//Dibuja realmente la línea.
+
+    ctx.fillText((valor / 1000).toFixed(0) + "k €", mIzq - 8, y + 4);			//Escribe el texto de cada valor del eje vertical, redondeados el numero a 0 decimales por toFixed(0)
+  }
+
+  // Dibujamos las barras
+  datosMargen.forEach((d, i) => {
+    const h = (d.margen / maxM) * altoC;				//Calcula la altura de la barra.
+
+    ctx.fillStyle = "#34d399";							//Define el color de las barras.
+
+    ctx.fillRect(
+      mIzq + i * anchoB + anchoB * 0.1,					//Calcula la posición horizontal de la barra. Empieza después del margen izquierdo. Mueve la barra según el mes. Deja un pequeño espacio a la izquierda dentro del hueco de cada barra.
+      mArr + altoC - h,									//Calcula dónde empieza la barra verticalmente.
+      anchoB * 0.8,										//La barra ocupa el 80% del espacio disponible para cada mes. El 20% restante queda como separación.
+      h													//La altura de la barra calculada antes.
+    );
+  });
+
+  // Estilo del texto de los meses
+  ctx.fillStyle = "#64748b";
+  ctx.font = "11px monospace";
+  ctx.textAlign = "center";
+
+  // Escribimos un mes cada 3 para que no se amontonen
+  datosMargen.forEach((d, i) => {
+    if (i % 3 === 0) {
+      ctx.fillText(
+        d.mes,											//Dibuja el nombre del mes.
+        mIzq + i * anchoB + anchoB / 2,					//Esto coloca el texto en el centro de cada barra.
+        mArr + altoC + 22								//Esto coloca el texto debajo de la gráfica.
+      );
+    }
+  });
+
+  
+}
+
+
+// ════════════════════════════════════════════════════════
+// 1. CANVAS – Pedidos Mensuales (Aitor)
+// ════════════════════════════════════════════════════════
+{
+const datosPedidos = DATA.ventas_mes.map(d => ({ mes: d.Mes, pedidos: d.NumPedidos })); // Mapea los datos de ventas a un formato de objeto mes/pedidos
+const canvas = document.getElementById("Canvas1_Aitor"); // Obtiene la referencia al elemento canvas del DOM
+const ctx = canvas.getContext("2d"); // Obtiene el contexto de renderizado 2D para dibujar
+const mIzq = 80, mDer = 20, mArr = 50, mAba = 50; // Define los márgenes internos del gráfico
+const anchoC = canvas.width - mIzq - mDer; // Calcula el ancho útil del área de dibujo
+const altoC = canvas.height - mArr - mAba; // Calcula el alto útil del área de dibujo
+const maxM = Math.max(...datosPedidos.map(d => d.pedidos)); // Encuentra el valor máximo de pedidos para escalar el eje Y
+const anchoB = anchoC / datosPedidos.length; // Calcula el ancho disponible para cada barra
+
+ctx.fillStyle = "#0a0c10"; ctx.fillRect(0,0,canvas.width,canvas.height); // Establece el color de fondo y rellena el canvas completo
+ctx.strokeStyle = "#232840"; // Define el color de las líneas de la cuadrícula
+ctx.fillStyle = "#64748b"; ctx.font = "12px monospace"; ctx.textAlign = "right"; // Configura el estilo del texto para las etiquetas del eje Y
+
+for (let i = 0; i <= 5; i++) { // Bucle para dibujar 5 niveles de la cuadrícula horizontal
+  const valor = (maxM / 5) * i; // Calcula el valor numérico de la etiqueta actual
+  const y = mArr + altoC - (altoC * i / 5); // Calcula la posición vertical de la línea y el texto
+  ctx.beginPath(); ctx.moveTo(mIzq, y); ctx.lineTo(mIzq + anchoC, y); ctx.stroke(); // Dibuja la línea horizontal de fondo
+  ctx.fillText(Math.round(valor), mIzq - 8, y + 4); // Dibuja el número correspondiente al valor en el eje Y
+}
+
+datosPedidos.forEach((d, i) => { // Itera sobre cada dato para dibujar las barras
+  const h = (d.pedidos / maxM) * altoC; // Calcula la altura proporcional de la barra según su valor
+  ctx.fillStyle = "#f472b6"; // Define el color rosa para las barras
+  ctx.fillRect(mIzq + i * anchoB + anchoB * 0.1, mArr + altoC - h, anchoB * 0.8, h); // Dibuja el rectángulo de la barra con un pequeño margen lateral
+});
+
+ctx.fillStyle = "#64748b"; ctx.font = "11px monospace"; ctx.textAlign = "center"; // Configura el estilo para los nombres de los meses
+datosPedidos.forEach((d, i) => { if (i % 3 === 0) ctx.fillText(d.mes, mIzq + i * anchoB + anchoB / 2, mArr + altoC + 22); }); // Dibuja el nombre del mes cada 3 posiciones en el eje X
+}
+
+
+// ════════════════════════════════════════════════════════
+// 2. SVG – Ingresos Netos Mensuales (Aitor)
+// ════════════════════════════════════════════════════════
+{
+const datosIngreso = DATA.ventas_mes.map(d => ({ mes: d.Mes, ingreso: d.IngresoNeto })); // Mapea los datos de origen a objetos de mes e ingreso neto
+const svg = document.getElementById("SVG1_Aitor"); // Obtiene la referencia al elemento SVG del DOM
+const W = 500, H = 400, sIzq = 80, sArr = 50; // Define dimensiones totales y márgenes superiores/izquierdos
+const anchoS = W - sIzq - 20, altoS = H - sArr - 50; // Calcula el área útil de dibujo para la gráfica
+const maxI = Math.max(...datosIngreso.map(d => d.ingreso)); // Determina el valor de ingreso más alto para la escala vertical
+const n = datosIngreso.length; // Almacena la cantidad total de puntos (meses) a representar
+const ns = "http://www.w3.org/2000/svg"; // Define el espacio de nombres necesario para crear elementos SVG
+
+const fondo = document.createElementNS(ns, "rect"); // Crea un elemento rectángulo para el fondo
+fondo.setAttribute("width", W); // Establece el ancho total del fondo
+fondo.setAttribute("height", H); // Establece el alto total del fondo
+fondo.setAttribute("fill", "#0a0c10"); // Aplica el color oscuro de fondo
+svg.appendChild(fondo); // Añade el fondo al contenedor SVG
+
+const puntos = datosIngreso.map((d, i) => ({ // Calcula las coordenadas X e Y para cada punto de la línea
+    x: sIzq + (i / (n - 1)) * anchoS, // Distribuye los puntos uniformemente a lo ancho
+    y: sArr + altoS - (d.ingreso / maxI) * altoS // Calcula la altura proporcional al ingreso (invertida para SVG)
+}));
+
+for (let i = 0; i <= 5; i++) { // Bucle para crear 6 niveles de referencia en la cuadrícula
+    const y = sArr + altoS - (altoS * i / 5); // Calcula la posición vertical de cada línea de guía
+
+    const lineaGrid = document.createElementNS(ns, "line"); // Crea una línea para la cuadrícula
+    lineaGrid.setAttribute("x1", sIzq); // Punto inicial X de la línea
+    lineaGrid.setAttribute("y1", y); // Punto inicial Y de la línea
+    lineaGrid.setAttribute("x2", sIzq + anchoS); // Punto final X de la línea
+    lineaGrid.setAttribute("y2", y); // Punto final Y de la línea
+    lineaGrid.setAttribute("stroke", "#232840"); // Define el color de la cuadrícula
+    svg.appendChild(lineaGrid); // Añade la línea al SVG
+
+    const etiquetaY = document.createElementNS(ns, "text"); // Crea el texto para la escala del eje Y
+    etiquetaY.setAttribute("x", sIzq - 8); // Posiciona el texto a la izquierda del área de dibujo
+    etiquetaY.setAttribute("y", y + 4); // Centra verticalmente el texto respecto a su línea
+    etiquetaY.setAttribute("fill", "#64748b"); // Define el color de la fuente
+    etiquetaY.setAttribute("font-size", "12"); // Define el tamaño de la fuente
+    etiquetaY.setAttribute("text-anchor", "end"); // Alinea el texto a la derecha
+    etiquetaY.textContent = ((maxI / 5 * i) / 1000).toFixed(0) + "k €"; // Formatea el valor en miles de euros
+    svg.appendChild(etiquetaY); // Añade la etiqueta de escala al SVG
+}
+
+const ptLinea = puntos.map(p => `${p.x},${p.y}`).join(" "); // Convierte los puntos en una cadena de coordenadas para la línea
+
+const linea = document.createElementNS(ns, "polyline"); // Crea el elemento de línea quebrada (gráfica de tendencia)
+linea.setAttribute("points", ptLinea); // Asigna las coordenadas calculadas
+linea.setAttribute("stroke", "#4f8ef7"); // Define el color azul de la línea
+linea.setAttribute("fill", "none"); // Asegura que el interior de la polilínea no se rellene
+svg.appendChild(linea); // Añade la línea de tendencia al SVG
+
+puntos.forEach(p => { // Itera sobre los puntos para dibujar círculos decorativos
+    const circulo = document.createElementNS(ns, "circle"); // Crea un elemento círculo
+    circulo.setAttribute("cx", p.x); // Posición horizontal del círculo
+    circulo.setAttribute("cy", p.y); // Posición vertical del círculo
+    circulo.setAttribute("r", "3"); // Define el radio del círculo
+    circulo.setAttribute("fill", "#4f8ef7"); // Define el color del círculo
+    svg.appendChild(circulo); // Añade cada nodo al SVG
+});
+
+datosIngreso.forEach((d, i) => { // Itera para colocar los nombres de los meses en el eje X
+    if (i % 3 === 0) { // Solo muestra una etiqueta cada 3 meses para evitar saturación
+        const etiquetaX = document.createElementNS(ns, "text"); // Crea el texto para el mes
+        etiquetaX.setAttribute("x", sIzq + (i / (n - 1)) * anchoS); // Posiciona el texto bajo su punto correspondiente
+        etiquetaX.setAttribute("y", sArr + altoS + 22); // Posiciona el texto debajo del eje horizontal
+        etiquetaX.setAttribute("fill", "#64748b"); // Define el color de la fuente
+        etiquetaX.setAttribute("font-size", "11"); // Define el tamaño de la fuente
+        etiquetaX.setAttribute("text-anchor", "middle"); // Centra el texto horizontalmente
+        etiquetaX.textContent = d.mes; // Asigna el nombre del mes
+        svg.appendChild(etiquetaX); // Añade la etiqueta del mes al SVG
+    }
+});
+
+
+}
+
+
+
+// ════════════════════════════════════════════════════════
+// 2. SVG – Tasa Conversión Mensual (Iker)
+// ════════════════════════════════════════════════════════
+{
+// Guardamos los datos del funnel mensual
+const datos = DATA.funnel_mensual;
+
+// Namespace necesario para crear elementos SVG desde JavaScript
+const ns = "http://www.w3.org/2000/svg";
+
+// Buscamos el SVG en el HTML
+const svg = document.getElementById("SVG1_Iker");
+
+// Definimos ancho, alto y márgenes de la gráfica
+const W = 500, H = 400, mIzq = 70, mArr = 50, mAba = 50, mDer = 20;
+
+// Calculamos el ancho y alto útiles para dibujar la grafica
+const anchoS = W - mIzq - mDer;
+const altoS = H - mArr - mAba;
+
+// n es el número de datos
+// maxV es la tasa de conversión más alta
+const n = datos.length;
+const maxV = Math.max(...datos.map(d => d.TasaConvPct));
+
+// Función auxiliar para crear elementos SVG
+const mkEl = (tag, attrs, text) => {							//"tag" es el tipo de elemento SVG que quieres crear, por ejemplo, linea, circulo... . "atr" on los atributos del elemento. "text" Es el texto que quieres poner dentro del elemento, solo si hace falta.
+  const el = document.createElementNS(ns, tag);					//Crea un elemento SVG del tipo indicado.
+
+  Object.entries(attrs).forEach(([k, v]) => {el.setAttribute(k, v);});		//Convierte el objeto de atributos en pares clave-valor. Recorre esos atributos y los coloca en el elemento
+
+  if (text != null) {
+    el.textContent = text;
+  }
+
+  return el;
+};
+
+
+
+// Convertimos cada dato mensual en un punto x,y
+const puntos = datos.map((d, i) => ({
+  x: mIzq + (i / (n - 1)) * anchoS,
+  y: mArr + altoS - (d.TasaConvPct / maxV) * altoS
+}));
+
+// Dibujamos líneas horizontales y valores del eje Y
+for (let i = 0; i <= 4; i++) {
+  const y = mArr + altoS - (altoS * i / 4);
+
+  svg.appendChild(
+    mkEl("line", {
+      x1: mIzq,
+      y1: y,
+      x2: mIzq + anchoS,
+      y2: y,
+      stroke: "#232840"
+    })
+  );
+
+  const t = mkEl(
+    "text",
+    {
+      x: mIzq - 6,
+      y: y + 4,
+      fill: "#64748b",
+      "font-size": "11",
+      "text-anchor": "end"
+    },
+    (maxV / 4 * i).toFixed(2) + "%"
+  );
+
+  svg.appendChild(t);
+}
+
+// Creamos el texto con todos los puntos de la línea
+const ptL = puntos.map(p => `${p.x},${p.y}`).join(" ");
+
+// Creamos los puntos inferiores para cerrar el área sombreada
+const ptC = `${puntos[n - 1].x},${mArr + altoS} ${puntos[0].x},${mArr + altoS}`;
+
+
+
+// Dibujamos la línea principal
+svg.appendChild(
+  mkEl("polyline", {
+    points: ptL,
+    fill: "none",
+    stroke: "#fb923c",
+    "stroke-width": "2"
+  })
+);
+
+// Dibujamos un círculo en cada punto
+puntos.forEach(p =>
+  svg.appendChild(
+    mkEl("circle", {
+      cx: p.x,
+      cy: p.y,
+      r: "3",
+      fill: "#fb923c"
+    })
+  )
+);
+
+// Escribimos algunos meses en el eje X
+datos.forEach((d, i) => {
+  if (i % 3 === 0) {
+    const t = mkEl("text", {
+      x: mIzq + (i / (n - 1)) * anchoS,
+      y: mArr + altoS + 22,
+      fill: "#64748b",
+      "font-size": "11",
+      "text-anchor": "middle"
+    });
+
+    t.textContent = d.Mes;
+    svg.appendChild(t);
+  }
+});
+
+// Creamos el título
+const tit = mkEl(
+  "text",
+  {
+    x: mIzq,
+    y: 28,
+    fill: "#e2e8f0",
+    "font-size": "13",
+    "font-family": "monospace",
+    "font-weight": "bold"
+  },
+  
+);
+
+// Añadimos el título al SVG
+svg.appendChild(tit);
+}
+
+// ════════════════════════════════════════════════════════
+// Chart.js defaults
+// ════════════════════════════════════════════════════════
+Chart.defaults.font.family = "monospace";
+Chart.defaults.font.size = 12;
+Chart.defaults.color = "#94a3b8";
+Chart.defaults.borderColor = "#232840";
+
+const COLORS = ["#4f8ef7","#34d399","#f472b6","#fb923c","#a78bfa","#fbbf24","#38bdf8","#f87171","#6ee7b7","#c4b5fd","#fdba74","#7dd3fc"];
+
+// ════════════════════════════════════════════════════════
+// 3. CHART.JS – Estado de Pedidos (Aitor)
+// ════════════════════════════════════════════════════════
+new Chart(document.getElementById("ChartJS1_Aitor"), {
+  type: "doughnut", // Define el tipo de gráfico como donut
+  data: { 
+    labels: DATA.estado_pedidos.map(d=>d.Estado), // Extrae nombres de los estados para las etiquetas
+    datasets: [{ 
+      data: DATA.estado_pedidos.map(d=>d.Count), // Extrae las cantidades para las porciones
+      backgroundColor: COLORS, // Aplica la paleta de colores definida
+      borderWidth: 0 // Elimina el borde de los segmentos
+    }] 
+  },
+  options: { 
+    responsive: false, // Desactiva el ajuste automático al contenedor
+    cutout: "65%", // Define el grosor del anillo (hueco central)
+    plugins: { 
+      legend: { 
+        position: "bottom", // Sitúa la leyenda debajo del gráfico
+        labels: { padding: 16, boxWidth: 12 } // Ajusta espaciado y tamaño de iconos de la leyenda
+      }, 
+    } 
+  }
+});
+
+
+// ════════════════════════════════════════════════════════
+// 3. CHART.JS – Métodos de Pago (Iker)
+// ════════════════════════════════════════════════════════
+new Chart(document.getElementById("ChartJS1_Iker"), {
+  // Tipo de gráfica: dona
+  type: "doughnut",
+
+  // Datos que se van a representar
+  data: {
+    // Etiquetas: nombres de los métodos de pago
+    labels: DATA.metodos_pago.map(d => d.MetodoPago),
+
+    // Conjunto de datos
+    datasets: [
+      {
+        // Valores numéricos: número de pedidos por método de pago
+        data: DATA.metodos_pago.map(d => d.NumPedidos),
+
+        // Colores de cada porción
+        backgroundColor: [
+          "#4f8ef7",
+          "#34d399",
+          "#f472b6",
+          "#fb923c"
+        ],
+
+        // Sin borde entre porciones
+        borderWidth: 0
+      }
+    ]
+  },
+
+  // Opciones visuales y de comportamiento
+  options: {
+    // No se adapta automáticamente al tamaño del contenedor
+    responsive: false,
+
+    // Tamaño del agujero central de la dona
+    cutout: "65%",
+
+    // Configuración de plugins
+    plugins: {
+      // Leyenda de colores
+      legend: {
+        // Leyenda debajo de la gráfica
+        position: "bottom",
+
+        // Estilo de las etiquetas de la leyenda
+        labels: {
+          padding: 16,
+          boxWidth: 12
+        }
+      },
+
+      
+    }
+  }
+});
+
+
+
+
+// ════════════════════════════════════════════════════════
+// 4. D3 – Treemap Devoluciones por Motivo (Iker)
+// ════════════════════════════════════════════════════════
+{
+  // Colores que se usarán para los rectángulos del treemap
+  const coloresT = [
+    "#7c3aed",
+    "#6d28d9",
+    "#4f46e5",
+    "#2563eb",
+    "#0284c7",
+    "#0891b2",
+    "#0d9488",
+    "#059669",
+    "#ec4899",
+    "#db2777",
+    "#f59e0b"
+  ];
+
+  // Tamaño total del SVG
+  const TW = 500, TH = 400;
+
+  // Seleccionamos el SVG donde se va a dibujar
+  const svgT = d3.select("#D31_Iker");
+
+
+
+  // Convertimos los datos en una jerarquía para que D3 pueda hacer el treemap
+  const root = d3.hierarchy({
+    children: DATA.motivos_devolucion
+  }).sum(d => d.Count);
+
+  // Calculamos el treemap
+  d3.treemap()
+    .size([TW, TH - 30])
+    .padding(2)
+    (root);
+
+  // Creamos un grupo por cada motivo de devolución
+  const celdas = svgT.selectAll("g")
+    .data(root.leaves())
+    .enter()
+    .append("g")
+    .attr("transform", d => `translate(${d.x0},${d.y0 + 30})`);
+
+  // Dibujamos los rectángulos
+  celdas.append("rect")
+    .attr("width", d => d.x1 - d.x0)
+    .attr("height", d => d.y1 - d.y0)
+    .attr("fill", (d, i) => coloresT[i % coloresT.length])
+    .attr("stroke", "#0a0c10")
+    .attr("stroke-width", 1);
+
+  // Escribimos el nombre del motivo
+  celdas.append("text")
+    .attr("x", 6)
+    .attr("y", 18)
+    .attr("fill", "#e2e8f0")
+    .attr("font-size", "12")
+    .attr("font-family", "monospace")
+    .attr("font-weight", "bold")
+    .text(d => {
+      const w = d.x1 - d.x0;
+
+      // Si el rectángulo es estrecho, abreviamos el texto
+      return w < 80
+        ? d.data.Motivo.slice(0, 3) + "…"
+        : d.data.Motivo;
+    });
+
+  // Escribimos el número de devoluciones
+  celdas.append("text")
+    .attr("x", 6)
+    .attr("y", d => (d.y1 - d.y0) - 8)
+    .attr("fill", "rgba(255,255,255,0.6)")
+    .attr("font-size", "11")
+    .attr("font-family", "monospace")
+    .text(d => {
+      // Solo muestra el número si el rectángulo tiene suficiente altura
+      return (d.y1 - d.y0) > 35
+        ? d.data.Count + " dev."
+        : "";
+    });
+}
+
+
+
+// ════════════════════════════════════════════════════════
+// 4. D3 – Treemap Subcategorías (Aitor)
+// ════════════════════════════════════════════════════════
+{
+const coloresT=["#7c3aed","#4f46e5","#2563eb","#0284c7","#0891b2","#0d9488","#059669","#4f8ef7","#34d399","#f472b6","#fb923c","#fbbf24"]; // Paleta de colores para las categorías
+const TW=500,TH=400; // Dimensiones base del gráfico Treemap
+
+const svgT=d3.select("#D31_Aitor"); // Selecciona el contenedor SVG usando D3
+
+const root=d3.hierarchy({children:DATA.ventas_subcategoria}).sum(d=>d.IngresoNeto); // Crea la jerarquía de datos y calcula el valor total para las áreas
+d3.treemap().size([TW,TH-30]).padding(2)(root); // Genera el layout del treemap calculando posiciones y tamaños
+
+const celdas=svgT.selectAll("g").data(root.leaves()).enter().append("g").attr("transform",d=>`translate(${d.x0},${d.y0+30})`); // Vincula los nodos finales (hojas) a grupos SVG y los posiciona en las coordenadas X e Y calculadas, aplicando un offset vertical para el título.
+celdas.append("rect").attr("width",d=>d.x1-d.x0).attr("height",d=>d.y1-d.y0).attr("fill",(d,i)=>coloresT[i%coloresT.length]).attr("stroke","#0a0c10").attr("stroke-width",1); // Dibuja los rectángulos con colores cíclicos y bordes
+celdas.append("text").attr("x",5).attr("y",16).attr("fill","#fff").attr("font-size","11").attr("font-family","monospace").attr("font-weight","bold").text(d=>{const w=d.x1-d.x0;return w<60?d.data.Subcategoria.slice(0,4)+"…":d.data.Subcategoria;}); // Inserta el nombre de la subcategoría con truncado inteligente según el ancho
+celdas.append("text").attr("x",5).attr("y",d=>Math.max((d.y1-d.y0)-8,20)).attr("fill","rgba(255,255,255,0.55)").attr("font-size","10").attr("font-family","monospace").text(d=>(d.y1-d.y0)>32?((d.data.IngresoNeto/1000).toFixed(0)+"k €"):""); // Muestra el ingreso en miles de euros si hay suficiente espacio vertical
+}
+
+
+
+
+// ════════════════════════════════════════════════════════
+// 5. SVG – Top Marcas (Aitor)
+// ════════════════════════════════════════════════════════
+const datos = DATA.ventas_marca; // Asigna el origen de datos de ventas por marca
+const ns = "http://www.w3.org/2000/svg"; // Define el namespace estándar para crear elementos SVG
+const svg = document.getElementById("svgMarcas"); // Obtiene la referencia al contenedor SVG del DOM
+const W = 900, H = 420, mIzq = 130, mDer = 80, mArr = 50, mAba = 20; // Define dimensiones totales y márgenes de la gráfica
+const anchoS = W - mIzq - mDer, altoS = H - mArr - mAba; // Calcula el área neta disponible para dibujar las barras
+const barH = altoS / datos.length - 4; // Determina la altura de cada barra restando el espaciado
+const maxV = Math.max(...datos.map(d => d.IngresoNeto)); // Obtiene el valor máximo para escalar el ancho de las barras
+
+// Fondo
+const fondo = document.createElementNS(ns, "rect"); // Crea el rectángulo base del gráfico
+fondo.setAttribute("width", W); // Establece el ancho total del lienzo
+fondo.setAttribute("height", H); // Establece el alto total del lienzo
+fondo.setAttribute("fill", "#0a0c10"); // Aplica el color de fondo oscuro
+svg.appendChild(fondo); // Inserta el fondo en el elemento SVG
+
+
+// Barras
+datos.forEach((d, i) => { // Itera sobre el array de marcas para dibujar cada fila
+    const y = mArr + i * (barH + 4); // Calcula la posición vertical 'y' de la barra actual
+    const anchosBarra = (d.IngresoNeto / maxV) * anchoS; // Calcula el ancho proporcional al ingreso neto
+
+    // Barra de valor
+    const barraValor = document.createElementNS(ns, "rect"); // Crea la barra representativa del dato
+    barraValor.setAttribute("x", mIzq); // Posiciona el inicio de la barra en el margen izquierdo
+    barraValor.setAttribute("y", y); // Asigna la posición vertical calculada
+    barraValor.setAttribute("width", anchosBarra); // Establece el ancho proporcional
+    barraValor.setAttribute("height", barH); // Establece la altura fija de la barra
+    barraValor.setAttribute("fill", COLORS[i % COLORS.length]); // Asigna un color cíclico de la paleta
+    barraValor.setAttribute("rx", 2); // Aplica un ligero redondeo en las esquinas (radio X)
+    svg.appendChild(barraValor); // Añade la barra al gráfico
+
+    // Etiqueta de nombre (izquierda)
+    const etiquetaNombre = document.createElementNS(ns, "text"); // Crea el texto para el nombre de la marca
+    etiquetaNombre.setAttribute("x", mIzq - 6); // Coloca el nombre a la izquierda de la barra
+    etiquetaNombre.setAttribute("y", y + barH / 2 + 4); // Centra el texto verticalmente respecto a la barra
+    etiquetaNombre.setAttribute("fill", "#94a3b8"); // Define un color grisáceo suave
+    etiquetaNombre.setAttribute("font-size", "11"); // Establece tamaño de fuente pequeño
+    etiquetaNombre.setAttribute("font-family", "monospace"); // Mantiene la consistencia tipográfica
+    etiquetaNombre.setAttribute("text-anchor", "end"); // Alinea el texto a la derecha (hacia la barra)
+    etiquetaNombre.textContent = d.Marca; // Asigna el nombre de la marca
+    svg.appendChild(etiquetaNombre); // Añade el nombre al SVG
+
+    // Etiqueta de valor y margen (derecha de la barra)
+    const etiquetaValor = document.createElementNS(ns, "text"); // Crea el texto para los datos numéricos
+    etiquetaValor.setAttribute("x", mIzq + anchosBarra + 6); // Posiciona el texto justo después de donde termina la barra
+    etiquetaValor.setAttribute("y", y + barH / 2 + 4); // Centra el texto verticalmente respecto a la barra
+    etiquetaValor.setAttribute("fill", "#e2e8f0"); // Usa un color más brillante para resaltar los datos
+    etiquetaValor.setAttribute("font-size", "11"); // Establece el tamaño de fuente
+    etiquetaValor.setAttribute("font-family", "monospace"); // Mantiene la consistencia tipográfica
+    etiquetaValor.textContent = (d.IngresoNeto / 1000).toFixed(0) + "k € · " + d.MargenPct + "%"; // Concatena ingreso en miles y % de margen
+    svg.appendChild(etiquetaValor); // Añade la información de valor al SVG
+});
+
+
+
+// ════════════════════════════════════════════════════════
+// 5. CHART.JS – Rating + % Recomendado por Categoría (Iker)
+// ════════════════════════════════════════════════════════
+// Creamos una nueva gráfica con Chart.js en el canvas con id "chartRatingCat"
+new Chart(document.getElementById("chartRatingCat"), {
+
+  // Indicamos que la gráfica será de barras
+  type: "bar",
+
+  // Aquí van los datos de la gráfica
+  data: {
+
+    // Sacamos las categorías para ponerlas en el eje X
+    labels: DATA.rating_por_categoria.map(d => d.Categoria),
+
+    // Creamos los grupos de barras que se van a dibujar
+    datasets: [
+
+      // Primer grupo de barras: rating medio
+      {
+        // Nombre que aparece en la leyenda
+        label: "Rating Medio",
+
+        // Sacamos el rating medio y lo multiplicamos por 20 para pasarlo a escala 0-100
+        data: DATA.rating_por_categoria.map(d => d.RatingMedio * 20),
+
+        // Color de las barras del rating
+        backgroundColor: "rgba(79,142,247,0.7)"
+      },
+
+      // Segundo grupo de barras: porcentaje recomendado
+      {
+        // Nombre que aparece en la leyenda
+        label: "% Recomendado",
+
+        // Sacamos el porcentaje recomendado de cada categoría
+        data: DATA.rating_por_categoria.map(d => d.PctRecomendado),
+
+        // Color de las barras del porcentaje recomendado
+        backgroundColor: "rgba(52,211,153,0.7)"
+      }
+    ]
+  },
+
+  // Opciones de configuración de la gráfica
+  options: {
+
+    // La gráfica no se adapta automáticamente al tamaño del contenedor
+    responsive: false,
+
+    // Configuración de leyenda y título
+    plugins: {
+
+      // Colocamos la leyenda debajo de la gráfica
+      legend: {
+        position: "bottom"
+      },
+
+      
+    },
+
+    
+  }
+});
+
+
+// ════════════════════════════════════════════════════════
+// 6. SVG – Ventas por CCAA (barras horizontales) (Iker)
+// ════════════════════════════════════════════════════════
+{
+// Guardamos los datos de ventas por comunidad autónoma
+const datos = DATA.ventas_por_ccaa;
+
+// Guardamos el namespace necesario para crear elementos SVG desde JavaScript
+const ns = "http://www.w3.org/2000/svg";
+
+// Buscamos el SVG donde se va a dibujar la gráfica
+const svg = document.getElementById("svgCCAA");
+
+// Definimos el tamaño total del SVG y los márgenes de la gráfica
+const W = 900, H = 420, mIzq = 180, mArr = 50, mDer = 90, mAba = 20;
+
+// Calculamos el ancho útil donde se dibujan las barras
+const anchoS = W - mIzq - mDer;
+
+// Calculamos el alto útil donde se dibujan las barras
+const altoS = H - mArr - mAba;
+
+// Calculamos la altura de cada barra según el número de comunidades
+const barH = altoS / datos.length - 4;
+
+// Buscamos el ingreso neto más alto para escalar todas las barras
+const maxV = Math.max(...datos.map(d => d.IngresoNeto));
+
+// Función para crear elementos SVG fácilmente
+const mkEl = (tag, attrs, text) => {
+
+  // Crea un elemento SVG del tipo indicado: rect, text, etc.
+  const el = document.createElementNS(ns, tag);
+
+  // Recorre los atributos y se los pone al elemento
+  Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v));
+
+  // Si hay texto, lo mete dentro del elemento
+  if (text != null) el.textContent = text;
+
+  // Devuelve el elemento creado
+  return el;
+};
+
+
+
+
+// Recorremos cada comunidad autónoma para dibujar una barra
+datos.forEach((d, i) => {
+
+  // Calculamos la posición vertical de la barra
+  const y = mArr + i * (barH + 4);
+
+  // Calculamos el ancho de la barra según su ingreso neto
+  const bw = (d.IngresoNeto / maxV) * anchoS;
+
+  // Dibujamos la barra de color
+  svg.appendChild(mkEl("rect", {
+    x: mIzq,
+    y: y,
+    width: bw,
+    height: barH,
+    fill: COLORS[i % COLORS.length]
+  }));
+
+  // Escribimos el nombre de la comunidad a la izquierda de la barra
+  svg.appendChild(mkEl("text", {
+    x: mIzq - 6,
+    y: y + barH / 2 + 4,
+    fill: "#94a3b8",
+    "font-size": "11",
+    "font-family": "monospace",
+    "text-anchor": "end"
+  }, d.CCAAEntrega));
+
+  // Escribimos el valor del ingreso neto a la derecha de la barra
+  svg.appendChild(mkEl("text", {
+    x: mIzq + bw + 6,
+    y: y + barH / 2 + 4,
+    fill: "#e2e8f0",
+    "font-size": "11",
+    "font-family": "monospace"
+  }, (d.IngresoNeto / 1000).toFixed(0) + "k €"));
+});
+}
+
+
+
+
+// ════════════════════════════════════════════════════════
+// 6. CHART.JS – Ingresos y Margen por Trimestre (Aitor)
+// ════════════════════════════════════════════════════════
+new Chart(document.getElementById("chartTrimestre"), {
+  type: "bar", // Establece un gráfico de barras verticales
+  data: {
+    labels: DATA.ventas_trimestre.map(d=>d.Trimestre), // Define los periodos (Q1, Q2, etc.) en el eje X
+    datasets: [
+      { 
+        label: "Ingreso Neto (€)", // Nombre de la primera serie de datos
+        data: DATA.ventas_trimestre.map(d=>d.IngresoNeto), // Carga los valores de ingresos
+        backgroundColor: "rgba(79,142,247)", // Color azul para la barra de ingresos
+        borderRadius: 4 // Aplica un ligero redondeo a las esquinas superiores de las barras
+      },
+      { 
+        label: "Margen Bruto (€)", // Nombre de la segunda serie de datos
+        data: DATA.ventas_trimestre.map(d=>d.MargenBruto), // Carga los valores de margen
+        backgroundColor: "rgba(52,211,153)", // Color verde para la barra de margen
+        borderRadius: 4 // Aplica redondeo para mantener la consistencia visual
+      }
+    ]
+  },
+  options: { 
+    responsive: false, // Desactiva el auto-ajuste para mantener dimensiones fijas
+    plugins: { 
+      legend: { position: "bottom" }, // Ubica la leyenda explicativa en la parte inferior
+      title: { 
+        display: true, // Habilita el título superior
+        text: "INGRESOS Y MARGEN BRUTO POR TRIMESTRE", // Define el texto del encabezado
+        color: "#e2e8f0", // Color gris claro para el título
+        font: { size: 13, weight: "bold" }, // Estilo tipográfico del título
+        align: "start" // Alinea el título al borde izquierdo
+      } 
+    },
+    scales: { 
+      y: { 
+        grid: { color: "#232840" }, // Define el color de las líneas de la cuadrícula horizontal
+        ticks: { callback: v => (v / 1000).toFixed(0) + "k €" } // Formatea el eje Y para mostrar miles (k) de euros
+      }, 
+      x: { 
+        grid: { display: false } // Oculta las líneas verticales de la cuadrícula para mayor limpieza
+      } 
+    }
+  }
+});
+
+
+</script>
+</body>
+</html>
